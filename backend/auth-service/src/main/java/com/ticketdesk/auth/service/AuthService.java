@@ -68,13 +68,10 @@ public class AuthService {
         String email = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
         User user;
 
-        boolean isAdminLoginAttempt = "admin@ticketdesk.com".equals(email) || "admin@123".equals(email);
+        boolean isAdminLoginAttempt = "admin@ticketdesk.com".equals(email);
 
         if (isAdminLoginAttempt) {
             var admins = userRepository.findAllByEmail("admin@ticketdesk.com");
-            if (admins.isEmpty()) {
-                admins = userRepository.findAllByEmail("admin@123");
-            }
 
             if (admins.isEmpty()) {
                 user = User.builder()

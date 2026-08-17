@@ -35,6 +35,20 @@ public class DataInitializer implements CommandLineRunner {
             log.warn("Notice during legacy admin cleanup: {}", e.getMessage());
         }
 
+        // Downgrade any non-static admin accounts to ROLE_USER
+        try {
+            var adminUsers = userRepository.findByRole(Role.ROLE_ADMIN);
+            for (User user : adminUsers) {
+                if (!"admin@ticketdesk.com".equalsIgnoreCase(user.getEmail())) {
+                    user.setRole(Role.ROLE_USER);
+                    userRepository.save(user);
+                    log.info("Downgraded non-static admin account ({}) to ROLE_USER.", user.getEmail());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Notice during non-static admin demotion cleanup: {}", e.getMessage());
+        }
+
         seedAdmin("admin@ticketdesk.com", "System Administrator");
     }
 
