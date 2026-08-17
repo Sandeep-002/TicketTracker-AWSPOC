@@ -10,6 +10,8 @@ on:
 
 env:
   AWS_REGION: ap-southeast-2
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 jobs:
   build-test-and-deploy:
@@ -46,7 +48,7 @@ jobs:
 
       # Step 3: Configure AWS Credentials & Login to ECR via AWS CLI
       - name: Configure AWS & Login to Amazon ECR
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' }}
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -57,7 +59,7 @@ jobs:
 
       # Step 4: Build & Push All Microservices to ECR
       - name: Build & Push Docker Images to ECR
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' }}
         run: |
           # Build & Push Auth Service
           docker build -t $ECR_REGISTRY/tkt-auth:latest ./backend/auth-service
@@ -77,13 +79,13 @@ jobs:
 
       # Step 5: Deploy Frontend static build to S3
       - name: Deploy Frontend to S3 Bucket
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' }}
         run: |
           aws s3 sync ./frontend/ticket-desk-ui/dist s3://ticketdesk-frontend-036230293591 --delete --region ${{ env.AWS_REGION }}
 
       # Step 6: Update ECS Service Definition
       - name: Update ECS Service Definition
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' }}
         run: |
           aws ecs update-service --cluster tkt-hs-cluster --service tkt-hs-service --force-new-deployment --region ${{ env.AWS_REGION }}
 
