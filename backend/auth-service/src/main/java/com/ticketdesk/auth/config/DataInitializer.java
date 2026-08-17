@@ -24,43 +24,49 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        seedAdmin("admin@ticketdesk.com", "System Administrator");
-
-        // Clean up legacy admin@123 if present
+        // Clean up legacy admin@123 accounts if present
         try {
-            Optional<User> legacyAdmin = userRepository.findByEmail("admin@ticketdesk.com");
-            if (legacyAdmin.isPresent()) {
-                Optional<User> currentAdmin = userRepository.findByEmail("admin@ticketdesk.com");
-                if (currentAdmin.isPresent() && !currentAdmin.get().getId().equals(legacyAdmin.get().getId())) {
-                    userRepository.delete(legacyAdmin.get());
-                    log.info("Deleted legacy admin@123 user account.");
-                } else {
-                    User u = legacyAdmin.get();
-                    u.setEmail("admin@ticketdesk.com");
-                    u.setPassword(passwordEncoder.encode("Password@123"));
-                    u.setRole(Role.ROLE_ADMIN);
-                    u.setStatus(UserStatus.APPROVED);
-                    userRepository.save(u);
-                    log.info("Migrated legacy admin@123 to admin@ticketdesk.com");
-                }
+            var legacyAdmins = userRepository.findAllByEmail("admin@123");
+            for (User legacy : legacyAdmins) {
+                userRepository.delete(legacy);
+                log.info("Deleted legacy admin@123 account (id={}).", legacy.getId());
             }
         } catch (Exception e) {
             log.warn("Notice during legacy admin cleanup: {}", e.getMessage());
         }
+
+        seedAdmin("admin@ticketdesk.com", "System Administrator");
     }
 
     private void seedAdmin(String email, String name) {
         try {
-            User admin = userRepository.findByEmail(email)
-                    .orElseGet(() -> User.builder().email(email).build());
+            var existingAdmins = userRepository.findAllByEmail(email);
+            User admin;
+            if (existingAdmins.isEmpty()) {
+                admin = User.builder()
+                        .email(email)
+                        .fullName(name)
+                        .password(passwordEncoder.encode("Password@123"))
+                        .role(Role.ROLE_ADMIN)
+                        .status(UserStatus.APPROVED)
+                        .build();
+                userRepository.save(admin);
+                log.info("Default Admin account created with email: {}", email);
+            } else {
+                admin = existingAdmins.get(0);
+                admin.setFullName(name);
+                admin.setPassword(passwordEncoder.encode("Password@123"));
+                admin.setRole(Role.ROLE_ADMIN);
+                admin.setStatus(UserStatus.APPROVED);
+                userRepository.save(admin);
 
-            admin.setFullName(name);
-            admin.setPassword(passwordEncoder.encode("Password@123"));
-            admin.setRole(Role.ROLE_ADMIN);
-            admin.setStatus(UserStatus.APPROVED);
-
-            userRepository.save(admin);
-            log.info("Default Admin account seeded/reset with email: {}", email);
+                // Clean up any extra duplicate entries if present
+                for (int i = 1; i < existingAdmins.size(); i++) {
+                    userRepository.delete(existingAdmins.get(i));
+                    log.info("Cleaned up duplicate admin user with id={}", existingAdmins.get(i).getId());
+                }
+                log.info("Default Admin account updated with email: {}", email);
+            }
         } catch (Exception e) {
             log.error("Failed to seed admin user {}: {}", email, e.getMessage());
         }
