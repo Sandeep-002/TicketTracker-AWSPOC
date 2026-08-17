@@ -1,0 +1,99 @@
+name: TicketDesk Production CI/CD Pipeline (M6)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  AWS_REGION: ap-southeast-2
+  ECR_REPOSITORY: tkt-ts-api
+
+jobs:
+  build-test-and-deploy:
+    name: Build, Scan, Push & Deploy to AWS ECS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # Step 1: Secret Scan (Fails deployment if committed credentials exist)
+      - name: Run Secret Scanner (TruffleHog)
+        uses: trufflesecurity/trufflehog-main-action@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+
+      # Step 2: Build & Unit Test Backend
+      - name: Build & Run Backend Unit Tests
+        run: |
+          cd backend/api-gateway
+          mvn test -q
+
+      # Step 3: Build & Unit Test Frontend
+      - name: Install & Build Frontend UI
+        run: |
+          cd frontend/ticket-desk-ui
+          npm ci
+          npm run build
+
+      # Step 4: Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Step 5: Login to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # Step 6: Build, Tag with Git SHA, and Push Image to ECR
+      - name: Build & Push Docker Image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build --platform linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./backend/api-gateway
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      # Step 7: Update ECS Service Definition
+      - name: Update ECS Service Definition
+        run: |
+          aws ecs update-service --cluster tkt-hs-cluster --service tkt-hs-service --force-new-deployment --region ${{ env.AWS_REGION }}
+
+      # Step 8: Smoke Test Against Deployed Endpoint
+      - name: Run Smoke Test Suite Against Production URL
+        run: |
+          echo "Waiting 60 seconds for ECS Fargate container to become healthy..."
+          sleep 60
+          ALB_URL=$(aws elbv2 describe-load-balancers --names tkt-hs-alb --region ${{ env.AWS_REGION }} --query 'LoadBalancers[0].DNSName' --output text)
+          echo "Testing endpoint: http://$ALB_URL/actuator/health"
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://$ALB_URL/actuator/health)
+          if [ "$STATUS_CODE" -eq 200 ]; then
+            echo "SUCCESS: Smoke test passed with HTTP 200 OK!"
+          else
+            echo "ERROR: Smoke test failed with HTTP status $STATUS_CODE"
+            exit 1
+          fi

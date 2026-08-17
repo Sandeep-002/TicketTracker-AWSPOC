@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.ticketdesk</groupId>
+    <artifactId>ticketdesk-backend</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>ticketdesk-backend</name>
+    <description>Root Parent POM registering all TicketDesk Microservices</description>
+
+    <modules>
+        <module>eureka-server</module>
+        <module>api-gateway</module>
+        <module>auth-service</module>
+        <module>ticket-service</module>
+        <module>notification-service</module>
+    </modules>
+
+</project>

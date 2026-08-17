@@ -1,0 +1,46 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/auth/**, /api/v1/admin/**
+          filters:
+            - JwtAuthenticationFilter
+
+        - id: ticket-service
+          uri: ${TICKET_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/v1/tickets/**, /api/v1/dashboard/**
+          filters:
+            - JwtAuthenticationFilter
+
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/notifications/**
+          filters:
+            - JwtAuthenticationFilter
+
+eureka:
+  client:
+    enabled: false
+    fetch-registry: false
+    register-with-eureka: false
+  instance:
+    prefer-ip-address: true
+
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970

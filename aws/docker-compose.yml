@@ -1,0 +1,143 @@
+version: '3.8'
+
+services:
+  # MySQL Database Service
+  mysql:
+    image: mysql:8.0
+    container_name: ticketdesk-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - ticketdesk-net
+
+  # Zookeeper for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: ticketdesk-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - ticketdesk-net
+
+  # Apache Kafka Event Broker
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: ticketdesk-kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      - ticketdesk-net
+
+  # Microservice 1: Eureka Service Discovery Registry
+  eureka-server:
+    build:
+      context: ../backend/eureka-server
+    container_name: ticketdesk-eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - ticketdesk-net
+
+  # Microservice 2: API Gateway
+  api-gateway:
+    build:
+      context: ../backend/api-gateway
+    container_name: ticketdesk-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_HOST: eureka-server
+    depends_on:
+      - eureka-server
+    networks:
+      - ticketdesk-net
+
+  # Microservice 3: Auth & User Service
+  auth-service:
+    build:
+      context: ../backend/auth-service
+    container_name: ticketdesk-auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      EUREKA_HOST: eureka-server
+      DB_HOST: mysql
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      - mysql
+      - kafka
+      - eureka-server
+    networks:
+      - ticketdesk-net
+
+  # Microservice 4: Ticket & Dashboard Service
+  ticket-service:
+    build:
+      context: ../backend/ticket-service
+    container_name: ticketdesk-ticket-service
+    ports:
+      - "8082:8082"
+    environment:
+      EUREKA_HOST: eureka-server
+      DB_HOST: mysql
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      AWS_REGION: us-east-1
+      AWS_S3_BUCKET: ticketdesk-attachments
+    depends_on:
+      - mysql
+      - kafka
+      - eureka-server
+    networks:
+      - ticketdesk-net
+
+  # Microservice 5: Notification Service (Kafka Consumer)
+  notification-service:
+    build:
+      context: ../backend/notification-service
+    container_name: ticketdesk-notification-service
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_HOST: eureka-server
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      - kafka
+      - eureka-server
+    networks:
+      - ticketdesk-net
+
+  # Frontend: React SPA
+  frontend:
+    build:
+      context: ../frontend/ticket-desk-ui
+    container_name: ticketdesk-frontend
+    ports:
+      - "3000:80"
+    environment:
+      VITE_API_GATEWAY_URL: http://localhost:8080
+    depends_on:
+      - api-gateway
+    networks:
+      - ticketdesk-net
+
+networks:
+  ticketdesk-net:
+    driver: bridge
+
+volumes:
+  mysql_data:

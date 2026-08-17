@@ -1,0 +1,59 @@
+{
+  "family": "ticketdesk-task-family",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "api-gateway",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/ticketdesk-gateway:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "EUREKA_HOST", "value": "localhost" }
+      ]
+    },
+    {
+      "name": "auth-service",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/ticketdesk-auth:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8081,
+          "hostPort": 8081,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "DB_HOST", "value": "ticketdesk-rds-mysql.c123456.us-east-1.rds.amazonaws.com" },
+        { "name": "KAFKA_BOOTSTRAP_SERVERS", "value": "b-1.ticketdesk-msk.c123456.kafka.us-east-1.amazonaws.com:9092" }
+      ]
+    },
+    {
+      "name": "ticket-service",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/ticketdesk-ticket:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8082,
+          "hostPort": 8082,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "DB_HOST", "value": "ticketdesk-rds-mysql.c123456.us-east-1.rds.amazonaws.com" },
+        { "name": "KAFKA_BOOTSTRAP_SERVERS", "value": "b-1.ticketdesk-msk.c123456.kafka.us-east-1.amazonaws.com:9092" },
+        { "name": "AWS_REGION", "value": "us-east-1" },
+        { "name": "AWS_S3_BUCKET", "value": "ticketdesk-attachments" }
+      ]
+    }
+  ]
+}
