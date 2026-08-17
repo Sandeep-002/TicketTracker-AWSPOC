@@ -10,6 +10,8 @@ on:
 
 env:
   AWS_REGION: ap-southeast-2
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 jobs:
   build-test-and-deploy:
@@ -32,31 +34,36 @@ jobs:
         with:
           node-version: '18'
 
-      # Step 1: Build & Unit Test Frontend
+      # Step 1: Build & Compile Backend Microservices
+      - name: Build Backend Microservices
+        run: |
+          mvn clean compile
+
+      # Step 2: Build & Unit Test Frontend
       - name: Install & Build Frontend UI
         run: |
           cd frontend/ticket-desk-ui
           npm ci
           npm run build
 
-      # Step 2: Configure AWS Credentials (only runs if AWS secrets are provided)
+      # Step 3: Configure AWS Credentials (only runs if AWS secrets are provided)
       - name: Configure AWS Credentials
-        if: "${{ secrets.AWS_ACCESS_KEY_ID != '' }}"
+        if: env.AWS_ACCESS_KEY_ID != ''
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Step 3: Login to Amazon ECR
+      # Step 4: Login to Amazon ECR
       - name: Login to Amazon ECR
-        if: "${{ secrets.AWS_ACCESS_KEY_ID != '' }}"
+        if: env.AWS_ACCESS_KEY_ID != ''
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # Step 4: Build & Push All Microservices to ECR
+      # Step 5: Build & Push All Microservices to ECR
       - name: Build & Push Docker Images to ECR
-        if: "${{ secrets.AWS_ACCESS_KEY_ID != '' }}"
+        if: env.AWS_ACCESS_KEY_ID != ''
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
@@ -76,14 +83,15 @@ jobs:
           docker build -t $ECR_REGISTRY/tkt-notification:latest ./backend/notification-service
           docker push $ECR_REGISTRY/tkt-notification:latest
 
-      # Step 5: Deploy Frontend static build to S3
+      # Step 6: Deploy Frontend static build to S3
       - name: Deploy Frontend to S3 Bucket
-        if: "${{ secrets.AWS_ACCESS_KEY_ID != '' }}"
+        if: env.AWS_ACCESS_KEY_ID != ''
         run: |
           aws s3 sync ./frontend/ticket-desk-ui/dist s3://ticketdesk-frontend-036230293591 --delete --region ${{ env.AWS_REGION }}
 
-      # Step 6: Update ECS Service Definition
+      # Step 7: Update ECS Service Definition
       - name: Update ECS Service Definition
-        if: "${{ secrets.AWS_ACCESS_KEY_ID != '' }}"
+        if: env.AWS_ACCESS_KEY_ID != ''
         run: |
           aws ecs update-service --cluster tkt-hs-cluster --service tkt-hs-service --force-new-deployment --region ${{ env.AWS_REGION }}
+
