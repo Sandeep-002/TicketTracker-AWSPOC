@@ -46,26 +46,20 @@ jobs:
           npm ci
           npm run build
 
-      # Step 3: Configure AWS Credentials (only runs if AWS secrets are provided)
-      - name: Configure AWS Credentials
+      # Step 3: Configure AWS Credentials & Login to ECR via AWS CLI
+      - name: Configure AWS & Login to Amazon ECR
         if: env.AWS_ACCESS_KEY_ID != ''
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ env.AWS_REGION }}
+          ECR_REGISTRY=$(aws sts get-caller-identity --query "Account" --output text).dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY
 
-      # Step 4: Login to Amazon ECR
-      - name: Login to Amazon ECR
-        if: env.AWS_ACCESS_KEY_ID != ''
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      # Step 5: Build & Push All Microservices to ECR
+      # Step 4: Build & Push All Microservices to ECR
       - name: Build & Push Docker Images to ECR
         if: env.AWS_ACCESS_KEY_ID != ''
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           # Build & Push Auth Service
           docker build -t $ECR_REGISTRY/tkt-auth:latest ./backend/auth-service
@@ -83,13 +77,13 @@ jobs:
           docker build -t $ECR_REGISTRY/tkt-notification:latest ./backend/notification-service
           docker push $ECR_REGISTRY/tkt-notification:latest
 
-      # Step 6: Deploy Frontend static build to S3
+      # Step 5: Deploy Frontend static build to S3
       - name: Deploy Frontend to S3 Bucket
         if: env.AWS_ACCESS_KEY_ID != ''
         run: |
           aws s3 sync ./frontend/ticket-desk-ui/dist s3://ticketdesk-frontend-036230293591 --delete --region ${{ env.AWS_REGION }}
 
-      # Step 7: Update ECS Service Definition
+      # Step 6: Update ECS Service Definition
       - name: Update ECS Service Definition
         if: env.AWS_ACCESS_KEY_ID != ''
         run: |
