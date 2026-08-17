@@ -1,6 +1,6 @@
 # 1. Attachments S3 Bucket
 resource "aws_s3_bucket" "attachments" {
-  bucket        = "${var.prefix}-attachments-bucket-v2"
+  bucket        = "${var.prefix}-attachments-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 
   tags = {

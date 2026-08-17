@@ -72,16 +72,32 @@ jobs:
             echo "Skipping Docker ECR push because AWS credentials are not configured in GitHub Secrets."
           fi
 
-      # Step 5: Deploy Frontend Static Build to S3
+      # Step 5: Apply Infrastructure via Terraform (CloudFront, SSL, ECS, Route 53)
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Deploy Infrastructure via Terraform
+        run: |
+          if [ "$AWS_CONFIGURED" = "true" ]; then
+            cd terraform
+            terraform init
+            terraform apply -auto-approve
+          else
+            echo "Skipping Terraform Apply because AWS credentials are not configured in GitHub Secrets."
+          fi
+
+      # Step 6: Deploy Frontend Static Build to S3
       - name: Deploy Frontend to S3 Bucket
         run: |
           if [ "$AWS_CONFIGURED" = "true" ]; then
-            aws s3 sync ./frontend/ticket-desk-ui/dist s3://ticketdesk-frontend-036230293591 --delete --region ${{ env.AWS_REGION }}
+            aws s3 sync ./frontend/ticket-desk-ui/dist s3://tkt-hs-frontend-036230293591 --delete --region ${{ env.AWS_REGION }}
           else
             echo "Skipping S3 upload because AWS credentials are not configured in GitHub Secrets."
           fi
 
-      # Step 6: Force New Deployment on AWS ECS Fargate
+      # Step 7: Force New Deployment on AWS ECS Fargate
       - name: Update ECS Service Definition
         run: |
           if [ "$AWS_CONFIGURED" = "true" ]; then

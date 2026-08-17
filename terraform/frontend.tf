@@ -1,6 +1,6 @@
 # 1. Private S3 Bucket for Frontend
 resource "aws_s3_bucket" "frontend" {
-  bucket        = "${var.prefix}-frontend-bucket"
+  bucket        = "${var.prefix}-frontend-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 
   tags = {

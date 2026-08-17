@@ -1,7 +1,7 @@
 # PowerShell Script to Deploy Updated Frontend and Backend to AWS
 
 $AWS_REGION = "ap-southeast-2"
-$S3_BUCKET = "ticketdesk-frontend-036230293591"
+$S3_BUCKET = "tkt-hs-frontend-036230293591"
 $ECS_CLUSTER = "tkt-hs-cluster"
 $ECS_SERVICE = "tkt-hs-service"
 

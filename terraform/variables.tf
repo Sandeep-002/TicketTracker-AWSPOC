@@ -54,13 +54,13 @@ variable "notification_image" {
 
 variable "domain_name" {
   type        = string
-  default     = "ticketdesktop.com"
+  default     = "ticketdesk.com"
   description = "Custom domain name for the application"
 }
 
 variable "use_custom_domain" {
   type        = bool
-  default     = false
+  default     = true
   description = "Set to true only if custom domain is purchased and hosted on Route 53"
 }
 
@@ -72,6 +72,6 @@ variable "container_port" {
 
 variable "enable_cloudfront" {
   type        = bool
-  default     = false
-  description = "Enable CloudFront CDN distribution (set to true if AWS account is verified)"
+  default     = true
+  description = "Enable CloudFront CDN distribution"
 }
