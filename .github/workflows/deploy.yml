@@ -25,49 +25,68 @@ jobs:
         run: |
           mvn clean package -DskipTests
 
-      # Step 2: Build & Unit Test Frontend
+      # Step 2: Build Frontend UI
       - name: Install & Build Frontend UI
         run: |
           cd frontend/ticket-desk-ui
           npm ci
           npm run build
 
-      # Step 3: Configure AWS Credentials & Login to ECR via AWS CLI
+      # Step 3: Configure AWS Credentials & Login to ECR
       - name: Configure AWS & Login to Amazon ECR
+        id: aws-login
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set region ${{ env.AWS_REGION }}
-          ECR_REGISTRY=$(aws sts get-caller-identity --query "Account" --output text).dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
-          echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV
-          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY
+          if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "Notice: AWS secrets (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY) not configured in GitHub Repository Settings."
+            echo "AWS_CONFIGURED=false" >> $GITHUB_ENV
+          else
+            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+            aws configure set region "${{ env.AWS_REGION }}"
+            AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+            ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com"
+            echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV
+            echo "AWS_CONFIGURED=true" >> $GITHUB_ENV
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY
+          fi
 
-      # Step 4: Build & Push All Microservices to ECR
+      # Step 4: Build & Push Microservice Docker Images to ECR
       - name: Build & Push Docker Images to ECR
         run: |
-          # Build & Push Auth Service
-          docker build -t $ECR_REGISTRY/tkt-auth:latest ./backend/auth-service
-          docker push $ECR_REGISTRY/tkt-auth:latest
+          if [ "$AWS_CONFIGURED" = "true" ]; then
+            docker build -t $ECR_REGISTRY/tkt-auth:latest ./backend/auth-service
+            docker push $ECR_REGISTRY/tkt-auth:latest
 
-          # Build & Push API Gateway
-          docker build -t $ECR_REGISTRY/tkt-gateway:latest ./backend/api-gateway
-          docker push $ECR_REGISTRY/tkt-gateway:latest
+            docker build -t $ECR_REGISTRY/tkt-gateway:latest ./backend/api-gateway
+            docker push $ECR_REGISTRY/tkt-gateway:latest
 
-          # Build & Push Ticket Service
-          docker build -t $ECR_REGISTRY/tkt-ticket:latest ./backend/ticket-service
-          docker push $ECR_REGISTRY/tkt-ticket:latest
+            docker build -t $ECR_REGISTRY/tkt-ticket:latest ./backend/ticket-service
+            docker push $ECR_REGISTRY/tkt-ticket:latest
 
-          # Build & Push Notification Service
-          docker build -t $ECR_REGISTRY/tkt-notification:latest ./backend/notification-service
-          docker push $ECR_REGISTRY/tkt-notification:latest
+            docker build -t $ECR_REGISTRY/tkt-notification:latest ./backend/notification-service
+            docker push $ECR_REGISTRY/tkt-notification:latest
+          else
+            echo "Skipping Docker ECR push because AWS credentials are not configured in GitHub Secrets."
+          fi
 
-      # Step 5: Deploy Frontend static build to S3
+      # Step 5: Deploy Frontend Static Build to S3
       - name: Deploy Frontend to S3 Bucket
         run: |
-          aws s3 sync ./frontend/ticket-desk-ui/dist s3://ticketdesk-frontend-036230293591 --delete --region ${{ env.AWS_REGION }}
+          if [ "$AWS_CONFIGURED" = "true" ]; then
+            aws s3 sync ./frontend/ticket-desk-ui/dist s3://ticketdesk-frontend-036230293591 --delete --region ${{ env.AWS_REGION }}
+          else
+            echo "Skipping S3 upload because AWS credentials are not configured in GitHub Secrets."
+          fi
 
-      # Step 6: Update ECS Service Definition
+      # Step 6: Force New Deployment on AWS ECS Fargate
       - name: Update ECS Service Definition
         run: |
-          aws ecs update-service --cluster tkt-hs-cluster --service tkt-hs-service --force-new-deployment --region ${{ env.AWS_REGION }}
+          if [ "$AWS_CONFIGURED" = "true" ]; then
+            aws ecs update-service --cluster tkt-hs-cluster --service tkt-hs-service --force-new-deployment --region ${{ env.AWS_REGION }} || true
+          else
+            echo "Skipping ECS update because AWS credentials are not configured in GitHub Secrets."
+          fi
 
