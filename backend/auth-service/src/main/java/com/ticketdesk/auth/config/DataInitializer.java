@@ -28,7 +28,7 @@ public class DataInitializer implements CommandLineRunner {
 
         // Clean up legacy admin@123 if present
         try {
-            Optional<User> legacyAdmin = userRepository.findByEmail("admin@123");
+            Optional<User> legacyAdmin = userRepository.findByEmail("admin@ticketdesk.com");
             if (legacyAdmin.isPresent()) {
                 Optional<User> currentAdmin = userRepository.findByEmail("admin@ticketdesk.com");
                 if (currentAdmin.isPresent() && !currentAdmin.get().getId().equals(legacyAdmin.get().getId())) {
