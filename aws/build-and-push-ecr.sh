@@ -1,37 +1,57 @@
 #!/bin/bash
-# TicketDesk AWS ECR Image Build and Push Script
+# TicketDesk AWS ECR & Docker Hub Build and Push Script
 
-AWS_REGION="us-east-1"
-AWS_ACCOUNT_ID="123456789012" # Replace with your AWS Account ID
-REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+AWS_REGION="ap-southeast-2"
+AWS_ACCOUNT_ID="036230293591"
+ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+DOCKERHUB_PREFIX="sandysingh010903"
 
-echo "=== 1. Authenticating to AWS ECR ==="
-aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
+echo "=========================================="
+echo " 1. Authenticating to AWS ECR"
+echo "=========================================="
+aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
-echo "=== 2. Building & Tagging Microservice Docker Images ==="
+echo "=========================================="
+echo " 2. Building & Pushing Frontend Image"
+echo "=========================================="
+docker build -t ${ECR_REGISTRY}/tkt-frontend:latest -t ${DOCKERHUB_PREFIX}/ticketdesk-frontend:latest ./frontend/ticket-desk-ui
+docker push ${ECR_REGISTRY}/tkt-frontend:latest
+docker push ${DOCKERHUB_PREFIX}/ticketdesk-frontend:latest
 
-# Eureka Server
-docker build -t ${REGISTRY}/ticketdesk-eureka:latest ../backend/eureka-server
-docker push ${REGISTRY}/ticketdesk-eureka:latest
+echo "=========================================="
+echo " 3. Building & Pushing Auth Service Image"
+echo "=========================================="
+docker build -t ${ECR_REGISTRY}/tkt-auth:latest -t ${DOCKERHUB_PREFIX}/ticketdesk-auth-service:latest ./backend/auth-service
+docker push ${ECR_REGISTRY}/tkt-auth:latest
+docker push ${DOCKERHUB_PREFIX}/ticketdesk-auth-service:latest
 
-# API Gateway
-docker build -t ${REGISTRY}/ticketdesk-gateway:latest ../backend/api-gateway
-docker push ${REGISTRY}/ticketdesk-gateway:latest
+echo "=========================================="
+echo " 4. Building & Pushing API Gateway Image"
+echo "=========================================="
+docker build -t ${ECR_REGISTRY}/tkt-gateway:latest -t ${DOCKERHUB_PREFIX}/ticketdesk-api-gateway:latest ./backend/api-gateway
+docker push ${ECR_REGISTRY}/tkt-gateway:latest
+docker push ${DOCKERHUB_PREFIX}/ticketdesk-api-gateway:latest
 
-# Auth Service
-docker build -t ${REGISTRY}/ticketdesk-auth:latest ../backend/auth-service
-docker push ${REGISTRY}/ticketdesk-auth:latest
+echo "=========================================="
+echo " 5. Building & Pushing Ticket Service Image"
+echo "=========================================="
+docker build -t ${ECR_REGISTRY}/tkt-ticket:latest -t ${DOCKERHUB_PREFIX}/ticketdesk-ticket-service:latest ./backend/ticket-service
+docker push ${ECR_REGISTRY}/tkt-ticket:latest
+docker push ${DOCKERHUB_PREFIX}/ticketdesk-ticket-service:latest
 
-# Ticket Service
-docker build -t ${REGISTRY}/ticketdesk-ticket:latest ../backend/ticket-service
-docker push ${REGISTRY}/ticketdesk-ticket:latest
+echo "=========================================="
+echo " 6. Building & Pushing Notification Service Image"
+echo "=========================================="
+docker build -t ${ECR_REGISTRY}/tkt-notification:latest -t ${DOCKERHUB_PREFIX}/ticketdesk-notification-service:latest ./backend/notification-service
+docker push ${ECR_REGISTRY}/tkt-notification:latest
+docker push ${DOCKERHUB_PREFIX}/ticketdesk-notification-service:latest
 
-# Notification Service
-docker build -t ${REGISTRY}/ticketdesk-notification:latest ../backend/notification-service
-docker push ${REGISTRY}/ticketdesk-notification:latest
+echo "=========================================="
+echo " 7. Building & Pushing Eureka Server Image"
+echo "=========================================="
+docker build -t ${DOCKERHUB_PREFIX}/ticketdesk-eureka-server:latest ./backend/eureka-server
+docker push ${DOCKERHUB_PREFIX}/ticketdesk-eureka-server:latest
 
-# React Frontend
-docker build -t ${REGISTRY}/ticketdesk-frontend:latest ../frontend/ticket-desk-ui
-docker push ${REGISTRY}/ticketdesk-frontend:latest
-
-echo "=== Build and Push to AWS ECR Completed Successfully! ==="
+echo "=========================================="
+echo " Build & Push to AWS ECR and Docker Hub Complete!"
+echo "=========================================="

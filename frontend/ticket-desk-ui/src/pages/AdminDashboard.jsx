@@ -199,6 +199,19 @@ const AdminDashboard = () => {
     }
   };
 
+  const getPriorityBadge = (p) => {
+    switch (p) {
+      case 'URGENT':
+      case 'HIGH':
+      case 'CRITICAL':
+        return <span className="bg-rose-500/10 text-rose-400 border border-rose-500/30 text-xs px-2.5 py-0.5 rounded font-mono font-bold">HIGH</span>;
+      case 'MEDIUM':
+        return <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs px-2.5 py-0.5 rounded font-mono font-semibold">MEDIUM</span>;
+      default:
+        return <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 text-xs px-2.5 py-0.5 rounded font-mono font-semibold">{p || 'LOW'}</span>;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-12">
       <Navbar />
@@ -589,13 +602,7 @@ const AdminDashboard = () => {
                         <td className="py-4 px-4 font-mono text-xs text-indigo-400">#{t.id}</td>
                         <td className="py-4 px-4 font-semibold text-white">{t.title}</td>
                         <td className="py-4 px-4 text-xs font-mono text-slate-400">{t.category}</td>
-                        <td className="py-4 px-4">
-                          <span className={`text-xs px-2 py-0.5 rounded font-bold ${
-                            t.priority === 'URGENT' || t.priority === 'HIGH' ? 'bg-rose-500/10 text-rose-400' : 'bg-slate-800 text-slate-300'
-                          }`}>
-                            {t.priority}
-                          </span>
-                        </td>
+                        <td className="py-4 px-4">{getPriorityBadge(t.priority)}</td>
                         <td className="py-4 px-4">{getStatusBadge(t.status)}</td>
                         <td className="py-4 px-4 text-xs font-semibold text-slate-300">
                           {t.assignedToName ? (

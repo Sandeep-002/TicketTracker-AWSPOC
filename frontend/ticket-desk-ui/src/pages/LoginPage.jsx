@@ -77,7 +77,7 @@ const LoginPage = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder="admin@ticketdesk.com"
                   className="w-full bg-slate-900/90 border border-slate-800 focus:border-indigo-500 rounded-xl pl-11 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 />
               </div>
@@ -106,6 +106,19 @@ const LoginPage = () => {
               </div>
             </div>
 
+            <div className="flex items-center justify-between text-xs pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@ticketdesk.com');
+                  setPassword('Password@123');
+                }}
+                className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors underline decoration-indigo-500/30 underline-offset-4"
+              >
+                Auto-fill Admin Credentials
+              </button>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -122,12 +135,15 @@ const LoginPage = () => {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-800/80 text-center">
+          <div className="mt-8 pt-6 border-t border-slate-800/80 text-center space-y-2">
             <p className="text-sm text-slate-400">
               Don't have an account?{' '}
               <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
                 Register as User
               </Link>
+            </p>
+            <p className="text-xs text-slate-500">
+              Back to <Link to="/" className="text-slate-400 hover:text-white underline">Home Landing Page</Link>
             </p>
           </div>
         </div>

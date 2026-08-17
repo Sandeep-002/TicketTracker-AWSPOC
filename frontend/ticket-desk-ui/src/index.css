@@ -2,87 +2,308 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    scroll-behavior: smooth;
+  }
+}
+
 @layer utilities {
   .glass-card {
     background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
+  
   .glass-card-hover {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
+  
   .glass-card-hover:hover {
     background: rgba(30, 41, 59, 0.85);
-    border-color: rgba(99, 102, 241, 0.4);
-    box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.25);
-    transform: translateY(-2px);
+    border-color: rgba(99, 102, 241, 0.45);
+    box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.25);
+    transform: translateY(-3px);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #e879f9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
 
-/* Light Mode Overrides */
+/* ========================================================
+   LIGHT MODE DESIGN SYSTEM & ULTRA HIGH CONTRAST
+   ======================================================== */
 html.light-mode body {
-  background-color: #f8fafc !important;
+  background-color: #f1f5f9 !important;
   color: #0f172a !important;
 }
 
-html.light-mode .bg-slate-950 {
+/* Header & Navigation Bar in Light Mode */
+html.light-mode header,
+html.light-mode nav {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+  border-color: #cbd5e1 !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Brand Logo Text in Light Mode */
+html.light-mode .bg-clip-text {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+/* Navigation Links */
+html.light-mode nav a,
+html.light-mode header a {
+  color: #334155 !important;
+  font-weight: 600 !important;
+}
+html.light-mode nav a:hover,
+html.light-mode header a:hover {
+  color: #4f46e5 !important;
+}
+
+/* Cards & Containers in Light Mode */
+html.light-mode .glass-card,
+html.light-mode .bg-slate-900,
+html.light-mode .bg-slate-950,
+html.light-mode .bg-slate-900\/90,
+html.light-mode .bg-slate-900\/80,
+html.light-mode .bg-slate-900\/60,
+html.light-mode .bg-slate-900\/40 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.06), 0 4px 12px -2px rgba(15, 23, 42, 0.03) !important;
+}
+
+html.light-mode .bg-slate-950\/90 {
   background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
 }
 
-html.light-mode .glass-card {
-  background: rgba(255, 255, 255, 0.92) !important;
-  border-color: rgba(203, 213, 225, 0.8) !important;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.06);
+/* Typography Hierarchy in Light Mode */
+html.light-mode h1,
+html.light-mode h2,
+html.light-mode h3,
+html.light-mode h4,
+html.light-mode h5,
+html.light-mode h6 {
+  color: #0f172a !important;
+  font-weight: 800 !important;
 }
 
+html.light-mode p,
+html.light-mode span,
+html.light-mode label,
+html.light-mode div,
+html.light-mode td,
+html.light-mode th {
+  color: #1e293b;
+}
+
+/* High Contrast Class Overrides in Light Mode */
 html.light-mode .text-white {
   color: #0f172a !important;
 }
 
-html.light-mode .text-slate-100 {
-  color: #1e293b !important;
-}
-
+html.light-mode .text-slate-100,
 html.light-mode .text-slate-200 {
-  color: #334155 !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
 }
 
 html.light-mode .text-slate-300 {
-  color: #334155 !important;
+  color: #1e293b !important;
+  font-weight: 600 !important;
 }
 
 html.light-mode .text-slate-400 {
-  color: #64748b !important;
+  color: #334155 !important;
+  font-weight: 600 !important;
 }
 
-html.light-mode input, 
-html.light-mode select, 
+html.light-mode .text-slate-500 {
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+
+/* Pastel Text Accent Overrides for High Contrast on White */
+html.light-mode .text-indigo-400 {
+  color: #4338ca !important;
+  font-weight: 700 !important;
+}
+
+html.light-mode .text-amber-400 {
+  color: #b45309 !important;
+  font-weight: 700 !important;
+}
+
+html.light-mode .text-emerald-400 {
+  color: #047857 !important;
+  font-weight: 700 !important;
+}
+
+html.light-mode .text-rose-400 {
+  color: #be123c !important;
+  font-weight: 700 !important;
+}
+
+html.light-mode .text-purple-400 {
+  color: #7e22ce !important;
+  font-weight: 700 !important;
+}
+
+html.light-mode .text-cyan-400 {
+  color: #0e7490 !important;
+  font-weight: 700 !important;
+}
+
+/* Stat Numbers & Display Metrics in Light Mode */
+html.light-mode .text-2xl,
+html.light-mode .text-3xl,
+html.light-mode .text-4xl,
+html.light-mode .text-5xl,
+html.light-mode .text-6xl {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+/* Filled Buttons & Primary CTAs (FORCE PURE WHITE TEXT) */
+html.light-mode .bg-indigo-600,
+html.light-mode .bg-indigo-600 *,
+html.light-mode .bg-indigo-500,
+html.light-mode .bg-indigo-500 *,
+html.light-mode .bg-gradient-to-r,
+html.light-mode .bg-gradient-to-r *,
+html.light-mode .bg-violet-600,
+html.light-mode .bg-violet-600 *,
+html.light-mode .bg-rose-600,
+html.light-mode .bg-rose-600 *,
+html.light-mode .bg-emerald-600,
+html.light-mode .bg-emerald-600 *,
+html.light-mode button[type="submit"],
+html.light-mode button[type="submit"] * {
+  color: #ffffff !important;
+}
+
+/* Inactive Tab Buttons & Toggle Pill Controls */
+html.light-mode button.text-slate-400,
+html.light-mode button.text-slate-300 {
+  color: #334155 !important;
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  font-weight: 600 !important;
+}
+html.light-mode button.text-slate-400:hover,
+html.light-mode button.text-slate-300:hover {
+  color: #0f172a !important;
+  background-color: #e2e8f0 !important;
+}
+
+/* Form Controls & Inputs in Light Mode */
+html.light-mode input,
+html.light-mode select,
 html.light-mode textarea {
   background-color: #ffffff !important;
   border-color: #cbd5e1 !important;
   color: #0f172a !important;
+  font-weight: 600 !important;
 }
 
-html.light-mode .border-slate-800 {
+html.light-mode input::placeholder,
+html.light-mode textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+html.light-mode input:focus,
+html.light-mode select:focus,
+html.light-mode textarea:focus {
+  border-color: #4f46e5 !important;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15) !important;
+  background-color: #ffffff !important;
+}
+
+/* Pill Badges in Light Mode */
+html.light-mode .bg-indigo-500\/10 {
+  background-color: #e0e7ff !important;
+  color: #3730a3 !important;
+  border-color: #c7d2fe !important;
+  font-weight: 700 !important;
+}
+html.light-mode .bg-indigo-500\/10 * {
+  color: #3730a3 !important;
+  font-weight: 700 !important;
+}
+
+html.light-mode .bg-amber-500\/10 {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #fde68a !important;
+  font-weight: 700 !important;
+}
+html.light-mode .bg-amber-500\/10 * {
+  color: #92400e !important;
+  font-weight: 700 !important;
+}
+
+html.light-mode .bg-emerald-500\/10 {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  border-color: #a7f3d0 !important;
+  font-weight: 700 !important;
+}
+html.light-mode .bg-emerald-500\/10 * {
+  color: #065f46 !important;
+  font-weight: 700 !important;
+}
+
+html.light-mode .bg-rose-500\/10 {
+  background-color: #ffe4e6 !important;
+  color: #9f1239 !important;
+  border-color: #fecdd3 !important;
+  font-weight: 700 !important;
+}
+html.light-mode .bg-rose-500\/10 * {
+  color: #9f1239 !important;
+  font-weight: 700 !important;
+}
+
+/* Tables in Light Mode */
+html.light-mode table thead tr {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+html.light-mode table thead th {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+html.light-mode table tbody tr {
   border-color: #e2e8f0 !important;
 }
-
-html.light-mode .bg-slate-900 {
-  background-color: #f1f5f9 !important;
+html.light-mode table tbody tr:hover {
+  background-color: #f8fafc !important;
 }
 
-html.light-mode ::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-html.light-mode ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+/* Borders in Light Mode */
+html.light-mode .border-slate-800,
+html.light-mode .border-slate-800\/80,
+html.light-mode .border-slate-800\/40 {
+  border-color: #cbd5e1 !important;
 }
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: #090d16;
@@ -93,4 +314,11 @@ html.light-mode ::-webkit-scrollbar-thumb {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+html.light-mode ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+html.light-mode ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
 }

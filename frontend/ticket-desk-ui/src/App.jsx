@@ -4,20 +4,13 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
 import ITSupportDashboard from './pages/ITSupportDashboard';
 import TicketDetailPage from './pages/TicketDetailPage';
-
-const RootRedirect = () => {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-  if (user.role === 'ROLE_ADMIN') return <Navigate to="/admin" replace />;
-  if (user.role === 'ROLE_IT_SUPPORT') return <Navigate to="/it-support" replace />;
-  return <Navigate to="/dashboard" replace />;
-};
 
 function App() {
   return (
@@ -26,11 +19,9 @@ function App() {
       <Router>
         <Routes>
           {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-
-          {/* Root Redirect based on user role */}
-          <Route path="/" element={<RootRedirect />} />
 
           {/* Role Protected Routes */}
           <Route element={<ProtectedRoute allowedRoles={['ROLE_ADMIN']} />}>
