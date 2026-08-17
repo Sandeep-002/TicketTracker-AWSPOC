@@ -34,7 +34,7 @@ jobs:
 
       # Step 1: Secret Scan
       - name: Run Secret Scanner (TruffleHog)
-        uses: trufflesecurity/trufflehog-main-action@main
+        uses: trufflesecurity/trufflehog-action@main
         continue-on-error: true
         with:
           path: ./
