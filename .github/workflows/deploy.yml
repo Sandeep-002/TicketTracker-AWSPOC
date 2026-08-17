@@ -43,6 +43,10 @@ jobs:
             echo "Notice: AWS secrets (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY) not configured in GitHub Repository Settings."
             echo "AWS_CONFIGURED=false" >> $GITHUB_ENV
           else
+            echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" >> $GITHUB_ENV
+            echo "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" >> $GITHUB_ENV
+            echo "AWS_DEFAULT_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
+            echo "AWS_REGION=${{ env.AWS_REGION }}" >> $GITHUB_ENV
             aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
             aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
             aws configure set region "${{ env.AWS_REGION }}"
@@ -79,6 +83,10 @@ jobs:
           terraform_version: 1.6.0
 
       - name: Deploy Infrastructure via Terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ env.AWS_REGION }}
         run: |
           if [ "$AWS_CONFIGURED" = "true" ]; then
             cd terraform
