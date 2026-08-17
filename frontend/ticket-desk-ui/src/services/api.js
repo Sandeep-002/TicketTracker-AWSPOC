@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://tkt-hs-alb-624792815.ap-southeast-2.elb.amazonaws.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
